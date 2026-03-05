@@ -1,0 +1,272 @@
+/* ===== ОБЩИЕ СТИЛИ ДЛЯ ВСЕХ СТРАНИЦ ===== */
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #e9f0f5;
+    font-family: Arial, sans-serif;
+}
+
+/* Шапка сайта */
+.header {
+    background: #2b5278;
+    color: white;
+    padding: 16px;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Логотип */
+.logo {
+    margin: 0;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.logo:hover {
+    opacity: 0.8;
+}
+
+/* Навигационные кнопки */
+.nav-button {
+    background-color: #ffa500;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.nav-button:hover {
+    background-color: #ff8c00;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Основной контейнер */
+.main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px;
+}
+
+/* Карточка для контента */
+.content-card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Подвал */
+.footer {
+    background: #2b5278;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    font-size: 14px;
+}
+
+/* ===== СТИЛИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ (GISMETEO) ===== */
+.weather-card {
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.weather-now {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.temp-now {
+    font-size: 64px;
+    font-weight: bold;
+    color: #2b5278;
+}
+
+.weather-details {
+    color: #333;
+}
+
+.forecast {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.forecast-day {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+    flex: 1;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* ===== СТИЛИ ДЛЯ КАЛЬКУЛЯТОРА ===== */
+/* Специфичные стили только для калькулятора */
+.calculator-page .result { 
+    width: 100%;
+    height: 70px;
+    margin-bottom: 20px;
+    padding: 0 15px;
+    background: white;
+    border: 2px solid #e9f0f5;
+    border-radius: 15px;
+    text-align: right;
+    color: #2b5278;
+    font-size: 32px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    line-height: 70px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+}
+
+.calculator-page .buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.calculator-page .button-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+.calculator-page .button-row.last-row {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.calculator-page .my-btn { 
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: #e9f0f5;
+    color: #2b5278;
+    font-size: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.calculator-page .my-btn:hover {
+    background: #d1e0eb;
+    transform: scale(1.05);
+}
+
+.calculator-page .my-btn:active {
+    filter: brightness(90%);
+    transform: scale(0.95);
+}
+
+.calculator-page .my-btn.primary { 
+    background: #2b5278;
+    color: white;
+}
+
+.calculator-page .my-btn.primary:hover {
+    background: #1e3c5c;
+}
+
+.calculator-page .my-btn.secondary { 
+    background: #ffa500;
+    color: white;
+}
+
+.calculator-page .my-btn.secondary:hover {
+    background: #ff8c00;
+}
+
+.calculator-page .my-btn.execute { 
+    width: 130px;
+    border-radius: 34px;
+    background: #ffa500;
+}
+
+.calculator-page .my-btn.execute:hover {
+    background: #ff8c00;
+}
+
+.calculator-page .button-row.last-row .my-btn:not(.execute) {
+    width: 60px;
+}
+
+/* ===== СТИЛИ ДЛЯ СТРАНИЦЫ "ОБ АВТОРЕ" ===== */
+.about-content {
+    text-align: center;
+    padding: 16px;
+}
+
+.about-title {
+    color: #2b5278;
+    font-size: 32px;
+    margin-bottom: 32px;
+    border-bottom: 3px solid #ffa500;
+    display: inline-block;
+    padding-bottom: 8px;
+}
+
+.about-info {
+    font-size: 19px; /* 1.2rem ≈ 19.2px, округлил до 19px */
+    line-height: 2;
+    color: #333;
+}
+
+.about-info p {
+    margin: 16px 0;
+}
+
+.about-info strong {
+    color: #2b5278;
+    font-size: 21px; /* 1.3rem ≈ 20.8px, округлил до 21px */
+}
+
+.about-card {
+    background: #f5f9ff;
+    border-radius: 15px;
+    padding: 32px;
+    margin-top: 16px;
+    border: 2px solid #e9f0f5;
+}
+
+.calculator-page .content-card {
+    max-width: 350px; 
+}
