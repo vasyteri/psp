@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gismeteo — погода в России и мире</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1 class="logo">
+                <a href="gismetio.html" style="text-decoration: none; color: inherit;">
+                    <span class="logo-gis">GIS</span><span class="logo-meteo">meteo</span>
+                </a>
+            </h1>
+            <div class="nav-buttons">
+                <a href="calculator.html" class="nav-button">Калькулятор</a>
+                <a href="about.html" class="nav-button">Об авторе</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main">
+        <div class="content-card">
+            <div class="weather-card">
+                <h2 style="color: #2b5278; margin-top: 0;">Москва</h2>
+                <div class="weather-now" style="display: flex; align-items: center; gap: 20px;">
+                    <div class="temp-now" style="font-size: 3rem; font-weight: bold; color: #2b5278;">+5°</div>
+                    <div class="weather-details" style="color: #666; line-height: 1.6;">
+                        <div>🌬️ Ветер: 5 м/с</div>
+                        <div>💧 Влажность: 70%</div>
+                        <div>☁️ Облачно</div>
+                    </div>
+                </div>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 10px;">
+                    <strong>Температура воздуха, °C</strong> · <strong>Порывы ветра, м/c</strong>
+                </p>
+            </div>
+
+            <h3 style="color: #2b5278; margin-top: 2rem;">Прогноз на неделю</h3>
+            <div class="forecast" style="display: flex; justify-content: space-between; gap: 10px; margin-top: 15px;">
+                <div class="forecast-day" style="background: #f0f7ff; padding: 10px; border-radius: 8px; flex: 1; text-align: center; color: #2b5278; font-weight: bold;">Пн<br><span style="font-weight: normal; color: #666;">+3°</span></div>
+                <div class="forecast-day" style="background: #f0f7ff; padding: 10px; border-radius: 8px; flex: 1; text-align: center; color: #2b5278; font-weight: bold;">Вт<br><span style="font-weight: normal; color: #666;">+4°</span></div>
+                <div class="forecast-day" style="background: #f0f7ff; padding: 10px; border-radius: 8px; flex: 1; text-align: center; color: #2b5278; font-weight: bold;">Ср<br><span style="font-weight: normal; color: #666;">+6°</span></div>
+                <div class="forecast-day" style="background: #f0f7ff; padding: 10px; border-radius: 8px; flex: 1; text-align: center; color: #2b5278; font-weight: bold;">Чт<br><span style="font-weight: normal; color: #666;">+5°</span></div>
+                <div class="forecast-day" style="background: #f0f7ff; padding: 10px; border-radius: 8px; flex: 1; text-align: center; color: #2b5278; font-weight: bold;">Пт<br><span style="font-weight: normal; color: #666;">+4°</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        © 2001–2026 Gismeteo · Все права защищены
+    </div>
+</body>
+</html>

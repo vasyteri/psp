@@ -1,0 +1,128 @@
+/* ===== ОБЩИЕ СТИЛИ ===== */
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #e9f0f5;
+    font-family: Arial, sans-serif;
+}
+
+.header {
+    background: #ffffff;
+    padding: 16px;
+    border-bottom: 1px solid #d1e0eb;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logo-gis { color: #2b5278; }
+.logo-meteo { color: #007FFF; }
+
+.nav-button {
+    background-color: transparent;
+    color: #007FFF;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s ease;
+    display: inline-block;
+}
+
+.nav-button:hover { color: #ff0000; }
+
+.main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px;
+}
+
+.content-card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+}
+
+.footer {
+    background: #007FFF;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    font-size: 14px;
+}
+
+/* ===== СТИЛИ КАЛЬКУЛЯТОРА ===== */
+.calculator-page .content-card { max-width: 350px; }
+
+.calculator-page .result { 
+    width: 100%;
+    height: 70px;
+    margin-bottom: 20px;
+    background: white;
+    border: 2px solid #e9f0f5;
+    border-radius: 15px;
+    text-align: right;
+    color: #2b5278;
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 70px;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.calculator-page .buttons-container { display: flex; flex-direction: column; gap: 10px; }
+.calculator-page .button-row { display: flex; justify-content: space-between; gap: 10px; }
+
+.calculator-page .my-btn { 
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: #e9f0f5;
+    color: #2b5278;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 2s ease;
+}
+
+.calculator-page .my-btn:hover { filter: brightness(95%); transform: scale(1.05); }
+
+/* Арифметические кнопки (синие) */
+.calculator-page .my-btn.primary { 
+    background: #007FFF; 
+    color: white;
+}
+
+/* Функциональные кнопки (мягкий лайм) */
+.calculator-page .my-btn.secondary { 
+    background: #A4DE02; 
+    color: white;
+}
+
+/* Кнопка равно (мягкий лайм) */
+.calculator-page .my-btn.execute { 
+    width: 130px;
+    border-radius: 34px;
+    background: #A4DE02; 
+    color: white;
+}
