@@ -1,5 +1,4 @@
-
-class AddCardFormComponent {
+export class AddCardFormComponent {
     constructor(parent, onAdd) {
         this.parent = parent;
         this.onAdd = onAdd;
@@ -41,7 +40,6 @@ class AddCardFormComponent {
             const condition = document.getElementById('city-condition').value;
             
             if (city && temp && wind && humidity && condition) {
-                // Добавляем знак + если температура положительная
                 if (!temp.toString().startsWith('-') && parseFloat(temp) >= 0) {
                     temp = '+' + temp;
                 }
@@ -51,10 +49,10 @@ class AddCardFormComponent {
                     temperature: temp,
                     wind: wind,
                     humidity: humidity,
-                    condition: condition
+                    condition: condition,
+                    desc: 'Новый город'
                 });
                 
-                // Очищаем форму
                 document.getElementById('city-name').value = '';
                 document.getElementById('city-temp').value = '';
                 document.getElementById('city-wind').value = '';
