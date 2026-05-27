@@ -1,32 +1,63 @@
-class MainPage {
+import { api, API_BASE } from '../api.js';
+
+export class MainPage {
     constructor(parent, router) {
         this.parent = parent;
         this.router = router;
-        this.cities = this.loadCities();
+        this.cities = [];
+        this.filterText = '';
+        this.filterHot = false;
     }
 
-    loadCities() {
-        const saved = localStorage.getItem('weatherCities');
-        if (saved) {
-            return JSON.parse(saved);
+    async loadCities(filter = '', hotOnly = false) {
+        let url = API_BASE;
+        if (filter) {
+            url += `?city=${encodeURIComponent(filter)}`;
         }
-        return [
-            { id: 1, city: 'Москва', temp: '+5', wind: '5', humidity: '70', condition: 'Облачно', desc: 'Столица России, крупнейший город страны.' },
-            { id: 2, city: 'Санкт-Петербург', temp: '+3', wind: '8', humidity: '85', condition: 'Дождь', desc: 'Северная столица, культурная жемчужина России.' },
-            { id: 3, city: 'Новосибирск', temp: '-10', wind: '4', humidity: '75', condition: 'Снег', desc: 'Столица Сибири, крупнейший научный центр России.' }
-        ];
+        
+        const { data, status } = await api.get(url);
+        
+        if (status === 200 && data) {
+            let filteredData = data;
+            if (hotOnly) {
+                filteredData = data.filter(city => {
+                    const tempValue = parseInt(city.temperature);
+                    return tempValue >= 20;
+                });
+            }
+            this.cities = filteredData;
+            this.drawCarousel();
+        } else {
+            console.error('Ошибка загрузки городов:', status);
+            this.cities = [];
+            this.drawCarousel();
+        }
     }
 
-    saveCities() {
-        localStorage.setItem('weatherCities', JSON.stringify(this.cities));
+    async addCity(cityData) {
+        const { data, status } = await api.post(API_BASE, cityData);
+        
+        if (status === 201) {
+            await this.loadCities(this.filterText, this.filterHot);
+            const inputs = ['cityName', 'cityTemp', 'cityWind', 'cityHumidity', 'cityCondition', 'cityDesc'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        } else {
+            alert('Ошибка при добавлении города: ' + (data?.error || 'Неизвестная ошибка'));
+        }
     }
 
-    deleteCity(cityId, event) {
+    async deleteCity(cityId, event) {
         event.stopPropagation();
         if (confirm('Удалить город?')) {
-            this.cities = this.cities.filter(city => city.id != cityId);
-            this.saveCities();
-            this.render();
+            const { status } = await api.delete(`${API_BASE}/${cityId}`);
+            if (status === 204) {
+                await this.loadCities(this.filterText, this.filterHot);
+            } else {
+                alert('Ошибка удаления города');
+            }
         }
     }
 
@@ -34,19 +65,49 @@ class MainPage {
         this.router.navigateToWeather(cityId);
     }
 
+    toggleHotFilter() {
+        this.filterHot = !this.filterHot;
+        const hotFilterBtn = document.getElementById('hotFilterBtn');
+        if (this.filterHot) {
+            hotFilterBtn.style.background = '#ff6b35';
+            hotFilterBtn.style.color = 'white';
+            hotFilterBtn.innerHTML = '🔥 Жаркие города (от 20°) ✓';
+        } else {
+            hotFilterBtn.style.background = '#e9ecef';
+            hotFilterBtn.style.color = '#333';
+            hotFilterBtn.innerHTML = '🔥 Показать жаркие (от 20°)';
+        }
+        this.loadCities(this.filterText, this.filterHot);
+    }
+
     render() {
         this.parent.innerHTML = '';
         
         const html = `
-            <div class="content-card" style="display: flex; gap: 30px;">
+            <div class="content-card" style="display: flex; gap: 30px; flex-wrap: wrap;">
                 <div style="flex: 1;">
-                    <h2 style="color: #2b5278; margin-bottom: 25px;">Погода в городах России</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h2 style="color: #2b5278; margin: 0;">Погода в городах России</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="hotFilterBtn" style="padding: 10px 20px; background: #e9ecef; border: none; border-radius: 25px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+                                🔥 Показать жаркие (от 20°)
+                            </button>
+                            <button id="resetFilterBtn" style="padding: 10px 20px; background: #2b5278; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+                                🗑️ Сбросить фильтр
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <input type="text" id="filterInput" placeholder="🔍 Фильтр по названию города..." 
+                               style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px;">
+                    </div>
                     
                     <div id="carouselContainer"></div>
                     
                     <hr style="margin: 40px 0 20px 0;">
-                    <h3>➕ Добавить город</h3>
-                    <div class="add-card-form">
+                    <h3>➕ Добавить новый город</h3>
+                    <div class="add-card-form" style="background: #f8f9fa; padding: 20px; border-radius: 15px;">
                         <div class="form-group">
                             <input type="text" id="cityName" placeholder="Название города">
                         </div>
@@ -65,12 +126,12 @@ class MainPage {
                         <div class="form-group">
                             <textarea id="cityDesc" rows="2" placeholder="Описание"></textarea>
                         </div>
-                        <button class="add-card-btn" id="addBtn">Добавить город</button>
+                        <button class="add-card-btn" id="addBtn" style="background: #28a745;">➕ Добавить город</button>
                     </div>
                 </div>
                 
                 <div class="snowflake-sidebar-3d">
-                    <h3 style="color: white; text-align: center; margin-bottom: 15px;">❄️ 3D Снежинка ❄️</h3>
+                    <h3>❄️ 3D Снежинка ❄️</h3>
                     <div id="snowflake-3d-container" style="width: 280px; height: 280px; margin: 0 auto;"></div>
                     <p style="text-align: center; font-size: 12px; color: #aaa; margin-top: 15px;">🖱️ Крути снежинку мышкой</p>
                 </div>
@@ -78,10 +139,28 @@ class MainPage {
         `;
         
         this.parent.insertAdjacentHTML('beforeend', html);
-        this.drawCarousel();
-        this.initSnowflake3D();
         
-        document.getElementById('addBtn').onclick = () => {
+        document.getElementById('filterInput').addEventListener('input', (e) => {
+            this.filterText = e.target.value;
+            this.loadCities(this.filterText, this.filterHot);
+        });
+        
+        document.getElementById('hotFilterBtn').addEventListener('click', () => {
+            this.toggleHotFilter();
+        });
+        
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            this.filterText = '';
+            this.filterHot = false;
+            document.getElementById('filterInput').value = '';
+            const hotFilterBtn = document.getElementById('hotFilterBtn');
+            hotFilterBtn.style.background = '#e9ecef';
+            hotFilterBtn.style.color = '#333';
+            hotFilterBtn.innerHTML = '🔥 Показать жаркие (от 20°)';
+            this.loadCities('', false);
+        });
+        
+        document.getElementById('addBtn').onclick = async () => {
             const city = document.getElementById('cityName').value;
             let temp = document.getElementById('cityTemp').value;
             const wind = document.getElementById('cityWind').value;
@@ -90,24 +169,111 @@ class MainPage {
             const desc = document.getElementById('cityDesc').value || 'Новый город';
             
             if (city && temp && wind && humidity && condition) {
-                if (parseFloat(temp) >= 0 && !temp.toString().startsWith('-')) temp = '+' + temp;
+                if (parseFloat(temp) >= 0 && !temp.toString().startsWith('-')) {
+                    temp = '+' + temp;
+                }
                 
-                const newId = this.cities.length > 0 ? Math.max(...this.cities.map(c => c.id)) + 1 : 1;
-                this.cities.push({
-                    id: newId, 
-                    city: city, 
-                    temp: temp,
+                await this.addCity({
+                    city: city,
+                    temperature: temp,
                     wind: wind,
-                    humidity: humidity, 
-                    condition: condition, 
+                    humidity: humidity,
+                    condition: condition,
                     desc: desc
                 });
-                this.saveCities();
-                this.render();
             } else {
                 alert('Заполните все поля!');
             }
         };
+        
+        this.loadCities();
+        this.initSnowflake3D();
+    }
+    
+    drawCarousel() {
+        const container = document.getElementById('carouselContainer');
+        if (!container) return;
+        
+        if (this.cities.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:60px;">Нет городов. Добавьте первый!</p>';
+            return;
+        }
+        
+        let carouselHtml = `
+            <div id="weatherCarousel" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-indicators">
+        `;
+        
+        this.cities.forEach((city, index) => {
+            carouselHtml += `<button type="button" data-bs-target="#weatherCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}"></button>`;
+        });
+        
+        carouselHtml += `</div><div class="carousel-inner">`;
+        
+        this.cities.forEach((city, index) => {
+            const tempValue = parseInt(city.temperature);
+            const isHot = tempValue >= 20;
+            
+            carouselHtml += `
+                <div class="carousel-item ${index === 0 ? 'active' : ''}" data-city-id="${city.id}">
+                    <div class="weather-card" style="background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 20px; padding: 30px; text-align: center; margin: 20px 60px; cursor: pointer; transition: transform 0.3s;">
+                        <div class="weather-card-header">
+                            <h3 style="color: #2b5278;">🏙️ ${city.city}</h3>
+                        </div>
+                        <div class="weather-card-body">
+                            <div class="temp-now" style="color: ${isHot ? '#ff6b35' : '#2b5278'}; font-size: 64px; font-weight: bold; margin: 15px 0;">
+                                ${city.temperature}°
+                            </div>
+                            <div class="weather-details" style="color: #555; line-height: 1.8;">
+                                <div>🌬️ Ветер: ${city.wind} м/с</div>
+                                <div>💧 Влажность: ${city.humidity}%</div>
+                                <div>☁️ ${city.condition}</div>
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e8f0; color: #666; font-style: italic;">
+                                    ${(city.desc || '').substring(0, 100)}${(city.desc || '').length > 100 ? '...' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e0e8f0;">
+                            <button class="delete-btn" data-id="${city.id}" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">🗑️ Удалить</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        carouselHtml += `
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#weatherCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#weatherCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        `;
+        
+        container.innerHTML = carouselHtml;
+        
+        document.querySelectorAll('.weather-card').forEach(card => {
+            const parentSlide = card.closest('.carousel-item');
+            const cityId = parseInt(parentSlide.dataset.cityId);
+            card.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('delete-btn')) {
+                    this.goToCity(cityId);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteCity(parseInt(btn.dataset.id), e);
+            });
+        });
+        
+        if (typeof bootstrap !== 'undefined') {
+            new bootstrap.Carousel(document.getElementById('weatherCarousel'), { interval: false });
+        }
     }
     
     async initSnowflake3D() {
@@ -142,8 +308,16 @@ class MainPage {
             backLight.position.set(-1, 1, -1);
             scene.add(backLight);
             
-            const snowflakeGroup = new THREE.Group();
+            const colors = [0xff66cc, 0x66ffcc, 0x66ccff];
+            const coloredLights = [];
+            for (let i = 0; i < 3; i++) {
+                const light = new THREE.PointLight(colors[i], 0.3);
+                light.position.set(Math.sin(i * Math.PI * 2 / 3) * 2, 1, Math.cos(i * Math.PI * 2 / 3) * 2);
+                scene.add(light);
+                coloredLights.push(light);
+            }
             
+            const snowflakeGroup = new THREE.Group();
             const armCount = 6;
             const armLength = 1.2;
             
@@ -151,13 +325,7 @@ class MainPage {
                 const angle = (i / armCount) * Math.PI * 2;
                 
                 const armGeometry = new THREE.CylinderGeometry(0.03, 0.08, armLength, 8);
-                const armMaterial = new THREE.MeshStandardMaterial({
-                    color: 0x88aaff,
-                    emissive: 0x2266aa,
-                    emissiveIntensity: 0.3,
-                    metalness: 0.8,
-                    roughness: 0.2
-                });
+                const armMaterial = new THREE.MeshStandardMaterial({ color: 0x88aaff, emissive: 0x2266aa, emissiveIntensity: 0.3, metalness: 0.8, roughness: 0.2 });
                 const arm = new THREE.Mesh(armGeometry, armMaterial);
                 arm.position.x = Math.cos(angle) * armLength / 2;
                 arm.position.z = Math.sin(angle) * armLength / 2;
@@ -166,14 +334,8 @@ class MainPage {
                 snowflakeGroup.add(arm);
                 
                 for (let j = 0.3; j <= 0.7; j += 0.2) {
-                    const branchLength = 0.2;
-                    const branchGeometry = new THREE.CylinderGeometry(0.02, 0.04, branchLength, 6);
-                    const branchMaterial = new THREE.MeshStandardMaterial({
-                        color: 0x99bbff,
-                        emissive: 0x3377cc,
-                        emissiveIntensity: 0.2,
-                        metalness: 0.7
-                    });
+                    const branchGeometry = new THREE.CylinderGeometry(0.02, 0.04, 0.2, 6);
+                    const branchMaterial = new THREE.MeshStandardMaterial({ color: 0x99bbff, emissive: 0x3377cc, emissiveIntensity: 0.2, metalness: 0.7 });
                     const branch = new THREE.Mesh(branchGeometry, branchMaterial);
                     const posX = Math.cos(angle) * armLength * j;
                     const posZ = Math.sin(angle) * armLength * j;
@@ -192,12 +354,7 @@ class MainPage {
                 }
                 
                 const tipGeometry = new THREE.SphereGeometry(0.07, 16, 16);
-                const tipMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xccddff,
-                    emissive: 0x4488dd,
-                    emissiveIntensity: 0.4,
-                    metalness: 0.9
-                });
+                const tipMaterial = new THREE.MeshStandardMaterial({ color: 0xccddff, emissive: 0x4488dd, emissiveIntensity: 0.4, metalness: 0.9 });
                 const tip = new THREE.Mesh(tipGeometry, tipMaterial);
                 tip.position.x = Math.cos(angle) * armLength;
                 tip.position.z = Math.sin(angle) * armLength;
@@ -205,36 +362,35 @@ class MainPage {
             }
             
             const centerGeometry = new THREE.IcosahedronGeometry(0.15, 0);
-            const centerMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                emissive: 0x66aaff,
-                emissiveIntensity: 0.5,
-                metalness: 0.95,
-                roughness: 0.1
-            });
+            const centerMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x66aaff, emissiveIntensity: 0.5, metalness: 0.95, roughness: 0.1 });
             const center = new THREE.Mesh(centerGeometry, centerMaterial);
             snowflakeGroup.add(center);
             
             for (let i = 0; i < 12; i++) {
                 const angle = (i / 12) * Math.PI * 2;
-                const smallCrystal = new THREE.Mesh(
-                    new THREE.DodecahedronGeometry(0.05, 0),
-                    new THREE.MeshStandardMaterial({
-                        color: 0xaaccff,
-                        emissive: 0x4488cc,
-                        emissiveIntensity: 0.3,
-                        metalness: 0.8
-                    })
-                );
+                const smallCrystal = new THREE.Mesh(new THREE.DodecahedronGeometry(0.05, 0), new THREE.MeshStandardMaterial({ color: 0xaaccff, emissive: 0x4488cc, emissiveIntensity: 0.3, metalness: 0.8 }));
                 smallCrystal.position.x = Math.cos(angle) * 0.25;
                 smallCrystal.position.z = Math.sin(angle) * 0.25;
                 snowflakeGroup.add(smallCrystal);
             }
             
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesPositions = new Float32Array(300 * 3);
+            for (let i = 0; i < 300; i++) {
+                particlesPositions[i * 3] = (Math.random() - 0.5) * 3;
+                particlesPositions[i * 3 + 1] = (Math.random() - 0.5) * 3;
+                particlesPositions[i * 3 + 2] = (Math.random() - 0.5) * 3;
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPositions, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.01, transparent: true, opacity: 0.5 });
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            snowflakeGroup.add(particles);
+            
+            scene.add(snowflakeGroup);
+            
             const starsGeometry = new THREE.BufferGeometry();
-            const starsCount = 800;
-            const starsPositions = new Float32Array(starsCount * 3);
-            for (let i = 0; i < starsCount; i++) {
+            const starsPositions = new Float32Array(800 * 3);
+            for (let i = 0; i < 800; i++) {
                 starsPositions[i * 3] = (Math.random() - 0.5) * 200;
                 starsPositions[i * 3 + 1] = (Math.random() - 0.5) * 100;
                 starsPositions[i * 3 + 2] = (Math.random() - 0.5) * 50 - 20;
@@ -244,13 +400,10 @@ class MainPage {
             const stars = new THREE.Points(starsGeometry, starsMaterial);
             scene.add(stars);
             
-            scene.add(snowflakeGroup);
-            
             let isDragging = false;
             let previousMousePosition = { x: 0, y: 0 };
             let rotationX = 0;
             let rotationY = 0;
-            
             const canvas = renderer.domElement;
             
             canvas.addEventListener('mousedown', (e) => {
@@ -274,217 +427,24 @@ class MainPage {
                 isDragging = false;
                 canvas.style.cursor = 'grab';
             });
-            
             canvas.style.cursor = 'grab';
             
+            let time = 0;
             function animate() {
                 requestAnimationFrame(animate);
+                time += 0.01;
+                snowflakeGroup.children.forEach((child, index) => {
+                    if (child.isMesh && child.material && child.material.emissiveIntensity !== undefined) {
+                        child.material.emissiveIntensity = 0.3 + Math.sin(time + index) * 0.2;
+                    }
+                });
+                coloredLights.forEach((light, i) => { light.intensity = 0.2 + Math.sin(time * 2 + i) * 0.15; });
+                particles.rotation.y += 0.005;
+                particles.rotation.x = Math.sin(time * 0.5) * 0.1;
+                stars.rotation.y += 0.0005;
                 renderer.render(scene, camera);
             }
             animate();
         }, 100);
-    }
-    
-    drawCarousel() {
-        const container = document.getElementById('carouselContainer');
-        
-        if (this.cities.length === 0) {
-            container.innerHTML = '<p style="text-align:center; padding:60px;">Нет городов. Добавьте первый!</p>';
-            return;
-        }
-        
-        let carouselHtml = `
-            <div id="weatherCarousel" class="carousel slide" data-bs-ride="false">
-                <div class="carousel-indicators">
-        `;
-        
-        this.cities.forEach((city, index) => {
-            carouselHtml += `
-                <button type="button" data-bs-target="#weatherCarousel" data-bs-slide-to="${index}" 
-                    class="${index === 0 ? 'active' : ''}" aria-current="${index === 0 ? 'true' : 'false'}" 
-                    aria-label="Slide ${index + 1}"></button>
-            `;
-        });
-        
-        carouselHtml += `
-                </div>
-                <div class="carousel-inner">
-        `;
-        
-        this.cities.forEach((city, index) => {
-            const tempValue = parseInt(city.temp);
-            const isCold = tempValue < 0;
-            
-            carouselHtml += `
-                <div class="carousel-item ${index === 0 ? 'active' : ''}" data-city-id="${city.id}">
-                    <div class="weather-carousel-card ${isCold ? 'cold-city' : ''}">
-                        <div class="weather-card-header">
-                            <h3>🏙️ ${city.city}</h3>
-                        </div>
-                        <div class="weather-card-body">
-                            <div class="temp-now ${isCold ? 'cold-temp' : ''}">${city.temp}°</div>
-                            <div class="weather-details">
-                                <div>🌬️ Ветер: ${city.wind} м/с</div>
-                                <div>💧 Влажность: ${city.humidity}%</div>
-                                <div>☁️ ${city.condition}</div>
-                                <div class="city-desc-preview">${city.desc.substring(0, 80)}${city.desc.length > 80 ? '...' : ''}</div>
-                            </div>
-                        </div>
-                        <div class="weather-card-footer">
-                            <button class="delete-btn" data-id="${city.id}">🗑️ Удалить</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        carouselHtml += `
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#weatherCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#weatherCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            </div>
-        `;
-        
-        container.innerHTML = carouselHtml;
-        this.addCarouselStyles();
-        
-        document.querySelectorAll('.weather-carousel-card').forEach(card => {
-            const parentSlide = card.closest('.carousel-item');
-            const cityId = parseInt(parentSlide.dataset.cityId);
-            
-            card.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('delete-btn')) {
-                    this.goToCity(cityId);
-                }
-            });
-        });
-        
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteCity(parseInt(btn.dataset.id), e);
-            });
-        });
-    }
-    
-    addCarouselStyles() {
-        if (document.getElementById('carousel-card-styles')) return;
-        
-        const style = document.createElement('style');
-        style.id = 'carousel-card-styles';
-        style.textContent = `
-            .weather-carousel-card {
-                background: linear-gradient(135deg, #ffffff 0%, #f5f9ff 100%);
-                border-radius: 20px;
-                padding: 30px;
-                text-align: center;
-                margin: 20px 60px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-                transition: transform 0.3s, box-shadow 0.3s;
-                position: relative;
-                overflow: hidden;
-                cursor: pointer;
-            }
-            
-            .weather-carousel-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            }
-            
-            .cold-city {
-                background: linear-gradient(135deg, #e8f0ff 0%, #d4e4ff 100%);
-                border: 2px solid #4a90e2;
-            }
-            
-            .cold-temp {
-                color: #4a90e2 !important;
-                text-shadow: 0 0 10px rgba(74,144,226,0.5);
-            }
-            
-            .weather-card-header h3 {
-                color: #2b5278;
-                font-size: 28px;
-                margin-bottom: 20px;
-            }
-            
-            .temp-now {
-                font-size: 64px;
-                font-weight: bold;
-                color: #007FFF;
-                margin: 15px 0;
-            }
-            
-            .weather-details {
-                color: #555;
-                line-height: 1.8;
-                font-size: 16px;
-            }
-            
-            .city-desc-preview {
-                margin-top: 15px;
-                padding-top: 15px;
-                border-top: 1px solid #e0e8f0;
-                color: #666;
-                font-style: italic;
-            }
-            
-            .weather-card-footer {
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
-                margin-top: 25px;
-                padding-top: 15px;
-                border-top: 1px solid #e0e8f0;
-            }
-            
-            .carousel-control-prev-icon,
-            .carousel-control-next-icon {
-                background-color: #007FFF;
-                border-radius: 50%;
-                padding: 20px;
-                background-size: 50%;
-            }
-            
-            .carousel-indicators button {
-                background-color: #2b5278;
-            }
-            
-            .carousel-indicators .active {
-                background-color: #007FFF;
-            }
-            
-            @media (max-width: 1200px) {
-                .content-card {
-                    flex-direction: column;
-                }
-                .snowflake-sidebar-3d {
-                    width: 100%;
-                    margin-top: 20px;
-                }
-                .snowflake-sidebar-3d #snowflake-3d-container {
-                    margin: 0 auto;
-                }
-            }
-            
-            @media (max-width: 768px) {
-                .weather-carousel-card {
-                    margin: 10px 20px;
-                    padding: 20px;
-                }
-                .temp-now {
-                    font-size: 42px;
-                }
-                .weather-card-header h3 {
-                    font-size: 22px;
-                }
-            }
-        `;
-        document.head.appendChild(style);
     }
 }

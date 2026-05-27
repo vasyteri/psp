@@ -1,4 +1,4 @@
-class CalculatorPage {
+export class CalculatorPage {
     constructor(parent) {
         this.parent = parent;
     }
@@ -6,7 +6,7 @@ class CalculatorPage {
     render() {
         this.parent.innerHTML = `
             <div class="calculator-container">
-                <div class="content-card">
+                <div class="content-card" style="max-width: 450px; margin: 0 auto;">
                     <div id="result" class="result">0</div>
                     <div class="buttons-container">
                         <div class="button-row">
@@ -41,9 +41,44 @@ class CalculatorPage {
                 </div>
             </div>
         `;
+        this.initCalculator();
+    }
+    
+    initCalculator() {
+        let firstNum = '', secondNum = '', operation = null;
+        const resultDiv = document.getElementById('result');
         
-        if (window.initCalculator) {
-            setTimeout(() => window.initCalculator(), 0);
-        }
+        document.querySelectorAll('.my-btn:not(.primary):not(.secondary)').forEach(btn => {
+            const id = btn.id;
+            if (['0','1','2','3','4','5','6','7','8','9','dot'].includes(id)) {
+                btn.onclick = () => {
+                    let digit = btn.innerHTML;
+                    if (digit === '.' && (operation ? secondNum : firstNum).includes('.')) return;
+                    if (!operation) { firstNum += digit; resultDiv.innerHTML = firstNum; }
+                    else { secondNum += digit; resultDiv.innerHTML = secondNum; }
+                };
+            }
+        });
+        
+        document.getElementById('plus').onclick = () => { if (firstNum) operation = '+'; };
+        document.getElementById('minus').onclick = () => { if (firstNum) operation = '-'; };
+        document.getElementById('multiply').onclick = () => { if (firstNum) operation = '*'; };
+        document.getElementById('divide').onclick = () => { if (firstNum) operation = '/'; };
+        
+        document.getElementById('clear').onclick = () => { firstNum = ''; secondNum = ''; operation = null; resultDiv.innerHTML = '0'; };
+        document.getElementById('backspace').onclick = () => {
+            if (!operation) { firstNum = firstNum.slice(0, -1); resultDiv.innerHTML = firstNum || '0'; }
+            else { secondNum = secondNum.slice(0, -1); resultDiv.innerHTML = secondNum || '0'; }
+        };
+        
+        document.getElementById('equal').onclick = () => {
+            if (!firstNum || !secondNum || !operation) return;
+            let a = parseFloat(firstNum), b = parseFloat(secondNum), res = 0;
+            if (operation === '+') res = a + b;
+            else if (operation === '-') res = a - b;
+            else if (operation === '*') res = a * b;
+            else if (operation === '/') { if (b === 0) { alert('На ноль делить нельзя!'); return; } res = a / b; }
+            firstNum = res.toString(); secondNum = ''; operation = null; resultDiv.innerHTML = firstNum;
+        };
     }
 }
